@@ -64,7 +64,7 @@ public class AppRunner {
 
         UniversalArray<Product> allowProducts = new UniversalArrayImpl<>();
         allowProducts.addAll(getAllowedProducts().toArray());
-        chooseAction(allowProducts);
+        chooseAction();
 
     }
 
@@ -79,29 +79,39 @@ public class AppRunner {
         return allowProducts;
     }
 
-    private void chooseAction(UniversalArray<Product> products) {
-        showActions(products);
+    private void chooseAction() {
+        UniversalArray<Product> allowProducts = getAllowedProducts();
+
+        print("-------------------------");
+        print("Выберите действие:");
+        if (allowProducts.size() > 0) {
+            showActions(allowProducts);
+        } else {
+            print("У вас недостаточно средств для покупки товаров.");
+        }
+
+        if (paymentAcceptor instanceof CoinAcceptor) {
+            print(" a - Пополнить баланс");
+        }
         print(" h - Выйти");
+
         String action = fromConsole();
-        if(action.trim().isEmpty()){
+
+        if (action.trim().isEmpty()) {
             System.out.println("Вы ничего не ввели, попробуйте снова!!!");
             return;
         }
+        if ("h".equalsIgnoreCase(action)) { isExit = true; return; }
 
-        if ("h".equalsIgnoreCase(action)) {
-            isExit = true;
+        if ("a".equalsIgnoreCase(action) && paymentAcceptor instanceof CoinAcceptor) {
+
+            ((CoinAcceptor) paymentAcceptor).addCoins();
             return;
         }
 
         try {
             ActionLetter selectedLetter = ActionLetter.valueOf(action.toUpperCase());
-            Product chosenProduct = null;
-            for (int i = 0; i < products.size(); i++) {
-                if (products.get(i).getActionLetter().equals(selectedLetter)) {
-                    chosenProduct = products.get(i);
-                    break;
-                }
-            }
+            Product chosenProduct = findProductByLetter(allowProducts, selectedLetter);
 
             if (chosenProduct != null) {
                 if (paymentAcceptor.pay(chosenProduct.getPrice())) {
@@ -112,10 +122,18 @@ public class AppRunner {
             } else {
                 print("Товар с такой буквой не найден среди доступных.");
             }
-
         } catch (IllegalArgumentException e) {
-            print("Недопустимая буква. Попробуйте еще раз.");
+            print("Недопустимая буква или команда. Попробуйте еще раз.");
         }
+    }
+
+    private Product findProductByLetter(UniversalArray<Product> products, ActionLetter letter) {
+        for (int i = 0; i < products.size(); i++) {
+            if (products.get(i).getActionLetter().equals(letter)) {
+                return products.get(i);
+            }
+        }
+        return null;
     }
 
     private void showActions(UniversalArray<Product> products) {
