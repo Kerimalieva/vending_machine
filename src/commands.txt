@@ -1,0 +1,9 @@
+git init
+git clone https://github.com/Kerimalieva/vending_machine.git
+git checkout home_work_25
+git add src/
+git commit -m "Комментарии"
+git push origin home_work_25
+git checkout master
+git merge home_work_25
+
