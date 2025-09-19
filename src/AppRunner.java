@@ -1,6 +1,8 @@
 import enums.ActionLetter;
 import model.*;
+import payment.CardAcceptor;
 import payment.CoinAcceptor;
+import payment.PaymentAcceptor;
 import util.UniversalArray;
 import util.UniversalArrayImpl;
 
@@ -10,7 +12,7 @@ public class AppRunner {
 
     private final UniversalArray<Product> products = new UniversalArrayImpl<>();
 
-    private final CoinAcceptor coinAcceptor;
+    private final PaymentAcceptor paymentAcceptor;
 
     private static boolean isExit = false;
 
@@ -23,7 +25,28 @@ public class AppRunner {
                 new Mars(ActionLetter.F, 80),
                 new Pistachios(ActionLetter.G, 130)
         });
-        coinAcceptor = new CoinAcceptor(100);
+        this.paymentAcceptor = selectPaymentMethod();
+    }
+
+    private PaymentAcceptor selectPaymentMethod() {
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            System.out.println("-------------------------");
+            System.out.println("Выберите способ оплаты:");
+            System.out.println("  1 -> Оплата Монетами");
+            System.out.println("  2 -> Оплата Картой");
+            System.out.print("Ваш выбор: ");
+
+            String choice = scanner.nextLine();
+
+            if (choice.equals("1")) {
+                return new CoinAcceptor(100);
+            } else if (choice.equals("2")) {
+                return new CardAcceptor();
+            } else {
+                System.out.println("\nНеверный ввод. Пожалуйста, введите цифру 1 или 2.\n");
+            }
+        }
     }
 
     public static void run() {
@@ -37,7 +60,7 @@ public class AppRunner {
         print("В автомате доступны:");
         showProducts(products);
 
-        print("Монет на сумму: " + coinAcceptor.getAmount());
+        paymentAcceptor.displayStatus();
 
         UniversalArray<Product> allowProducts = new UniversalArrayImpl<>();
         allowProducts.addAll(getAllowedProducts().toArray());
@@ -48,7 +71,8 @@ public class AppRunner {
     private UniversalArray<Product> getAllowedProducts() {
         UniversalArray<Product> allowProducts = new UniversalArrayImpl<>();
         for (int i = 0; i < products.size(); i++) {
-            if (coinAcceptor.getAmount() >= products.get(i).getPrice()) {
+            Product p = products.get(i);
+            if (paymentAcceptor.canPay(p.getPrice())) {
                 allowProducts.add(products.get(i));
             }
         }
@@ -64,19 +88,27 @@ public class AppRunner {
             return;
         }
         try {
-
+            ActionLetter selectedLetter = ActionLetter.valueOf(action.toUpperCase());
+            Product chosenProduct = null;
             for (int i = 0; i < products.size(); i++) {
-                if (products.get(i).getActionLetter().equals(ActionLetter.valueOf(action.toUpperCase()))) {
-                    coinAcceptor.setAmount(coinAcceptor.getAmount() - products.get(i).getPrice());
-                    print("Вы купили " + products.get(i).getName());
-                    break;
-                } else if ("h".equalsIgnoreCase(action)) {
-                    isExit = true;
+                if (products.get(i).getActionLetter().equals(selectedLetter)) {
+                    chosenProduct = products.get(i);
                     break;
                 }
             }
+
+            if (chosenProduct != null) {
+                if (paymentAcceptor.pay(chosenProduct.getPrice())) {
+                    print("Вы купили " + chosenProduct.getName());
+                } else {
+                    print("Оплата не удалась. Попробуйте еще раз.");
+                }
+            } else {
+                print("Товар с такой буквой не найден среди доступных.");
+            }
+
         } catch (IllegalArgumentException e) {
-            print("Недопустимая буква. Попрбуйте еще раз.");
+            print("Недопустимая буква. Попробуйте еще раз.");
             chooseAction(products);
         }
     }
