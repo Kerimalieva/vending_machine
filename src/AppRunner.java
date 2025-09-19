@@ -57,8 +57,13 @@ public class AppRunner {
     private void chooseAction(UniversalArray<Product> products) {
         showActions(products);
         print(" h - Выйти");
-        String action = fromConsole().substring(0, 1);
+        String action = fromConsole();
+        if(action.trim().isEmpty()){
+            System.out.println("Вы ничего не ввели, попробуйте снова!!!");
+            return;
+        }
         try {
+
             for (int i = 0; i < products.size(); i++) {
                 if (products.get(i).getActionLetter().equals(ActionLetter.valueOf(action.toUpperCase()))) {
                     coinAcceptor.setAmount(coinAcceptor.getAmount() - products.get(i).getPrice());
@@ -73,8 +78,6 @@ public class AppRunner {
             print("Недопустимая буква. Попрбуйте еще раз.");
             chooseAction(products);
         }
-
-
     }
 
     private void showActions(UniversalArray<Product> products) {
