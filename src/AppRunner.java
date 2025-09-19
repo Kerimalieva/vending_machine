@@ -87,6 +87,12 @@ public class AppRunner {
             System.out.println("Вы ничего не ввели, попробуйте снова!!!");
             return;
         }
+
+        if ("h".equalsIgnoreCase(action)) {
+            isExit = true;
+            return;
+        }
+
         try {
             ActionLetter selectedLetter = ActionLetter.valueOf(action.toUpperCase());
             Product chosenProduct = null;
@@ -109,7 +115,6 @@ public class AppRunner {
 
         } catch (IllegalArgumentException e) {
             print("Недопустимая буква. Попробуйте еще раз.");
-            chooseAction(products);
         }
     }
 
